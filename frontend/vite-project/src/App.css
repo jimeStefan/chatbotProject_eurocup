@@ -1,0 +1,45 @@
+.App {
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+
+.chatbox {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  height: 400px;
+  overflow-y: scroll;
+  margin-bottom: 10px;
+  background-color: #f9f9f9;
+}
+
+.message {
+  padding: 5px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 5px;
+}
+
+.message.user {
+  text-align: right;
+}
+
+input {
+  width: calc(100% - 110px);
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background-color: #4CAF50;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #45a049;
+}
