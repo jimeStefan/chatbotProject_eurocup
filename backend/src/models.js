@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// Define Match schema
 const matchSchema = new mongoose.Schema({
   match_id: String,
   date: Date,
@@ -13,61 +14,37 @@ const matchSchema = new mongoose.Schema({
   }
 });
 
-const playerSchema = new mongoose.Schema({
-  player_id: String,
-  name: String,
-  team: String,
-  position: String,
-  statistics: {
-    matches_played: Number,
-    goals: Number,
-    assists: Number,
-    yellow_cards: Number,
-    red_cards: Number
-  }
-});
-
-const teamSchema = new mongoose.Schema({
-  team_id: String,
-  name: String,
-  players: [String]
-});
-
-const realTimeScoreSchema = new mongoose.Schema({
-  match_id: String,
-  updates: [
-    {
-      time: Date,
-      description: String,
-      score: {
-        team1: Number,
-        team2: Number
-      }
-    }
-  ]
-});
-
-const historicalDataSchema = new mongoose.Schema({
-  year: Number,
-  champion: String,
-  runner_up: String,
-  top_scorer: {
-    name: String,
-    goals: Number
-  },
-  matches: [String] // Array of match IDs
-});
+// Create index on the date field
+matchSchema.index({ date: 1 });
 
 const Match = mongoose.model('Match', matchSchema);
-const Player = mongoose.model('Player', playerSchema);
-const Team = mongoose.model('Team', teamSchema);
-const RealTimeScore = mongoose.model('RealTimeScore', realTimeScoreSchema);
-const HistoricalData = mongoose.model('HistoricalData', historicalDataSchema);
 
-module.exports = {
-  Match,
-  Player,
-  Team,
-  RealTimeScore,
-  HistoricalData
-};
+// Define User schema
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+const User = mongoose.model('User', userSchema);
+
+// Define Conversation schema
+const conversationSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  messages: [{
+    text: { type: String, required: true },
+    sender: { type: String, enum: ['user', 'bot'], required: true },
+    timestamp: { type: Date, default: Date.now }
+  }],
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// Create index on the user field
+conversationSchema.index({ user: 1 });
+
+const Conversation = mongoose.model('Conversation', conversationSchema);
+
+module.exports = { Match, User, Conversation };

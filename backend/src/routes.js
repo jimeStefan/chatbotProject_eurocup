@@ -1,62 +1,93 @@
 const express = require('express');
-const { Match, Player, Team, RealTimeScore, HistoricalData } = require('./models');
+const bcrypt = require('bcrypt');
+const { Match, User, Conversation } = require('./models');
+const { getEuroCupTeams, getEuroCupPlayers } = require('./services/footballApiService');
 const router = express.Router();
 
-// Route to get all matches
-router.get('/matches', async (req, res) => {
+// User authentication routes
+router.post('/register', async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Username or email already exists' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({ username, email, password: hashedPassword });
+    await newUser.save();
+    res.status(201).json({ message: 'User registered successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ error: 'Invalid email or password' });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ error: 'Invalid email or password' });
+    }
+
+    res.status(200).json({ message: 'Login successful' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Conversation routes
+router.post('/conversations', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const newConversation = new Conversation({ user: userId });
+    await newConversation.save();
+    res.status(201).json({ message: 'Conversation created successfully', conversation: newConversation });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/conversations/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const conversations = await Conversation.find({ user: userId }).populate('user');
+    res.status(200).json(conversations);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Test MongoDB connection
+router.get('/test-db', async (req, res) => {
   try {
     const matches = await Match.find();
-    res.json(matches);
+    res.status(200).json(matches);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Route to get a specific match
-router.get('/matches/:id', async (req, res) => {
+// Test API-SPORTS connection
+router.get('/test-api', async (req, res) => {
   try {
-    const match = await Match.findById(req.params.id);
-    res.json(match);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Route to get all players
-router.get('/players', async (req, res) => {
-  try {
-    const players = await Player.find();
-    res.json(players);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Route to get a specific player
-router.get('/players/:id', async (req, res) => {
-  try {
-    const player = await Player.findById(req.params.id);
-    res.json(player);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Route to get real-time scores
-router.get('/real-time-scores', async (req, res) => {
-  try {
-    const scores = await RealTimeScore.find();
-    res.json(scores);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Route to get historical data
-router.get('/historical-data', async (req, res) => {
-  try {
-    const data = await HistoricalData.find();
-    res.json(data);
+    const teams = await getEuroCupTeams();
+    res.status(200).json(teams);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
