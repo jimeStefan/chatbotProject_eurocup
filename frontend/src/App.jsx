@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import './App.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+
 
 const socket = io('http://localhost:5000');
 
@@ -27,23 +29,29 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <h1>Eurocup Chatbot</h1>
-      <div className="chatbox">
+
+    <div className="container">
+
+      <h1 className="my-4">EUROCUP  2024</h1>
+      <div className="chatbox border rounded p-3 mb-4">
         {messages.map((msg, index) => (
           <div key={index} className={`message ${msg.user ? 'user' : ''}`}>
             {msg.text}
           </div>
+
         ))}
       </div>
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-        placeholder="Type a message..."
-      />
-      <button onClick={sendMessage}>Send</button>
+      <div className="input-group mb-3">
+        <input
+          type="text"
+          className="form-control"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+          placeholder="Type a message..."
+        />
+        <button className="btn btn-primary" onClick={sendMessage}>Send</button>
+      </div>
     </div>
   );
 }
