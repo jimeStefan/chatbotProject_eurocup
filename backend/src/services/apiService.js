@@ -1,4 +1,4 @@
-const axios = require('axios');
+/*const axios = require('axios');
 
 const API_KEY = '9e59e0123e84ca78fb2f9cd18709b990';
 const API_HOST = 'v3.football.api-sports.io';
@@ -40,3 +40,22 @@ module.exports = {
   getEuroCupTeams,
   getEuroCupPlayers
 };
+*/
+var axios = require('axios');
+
+var config = {
+  method: 'get',
+  url: 'https://v3.football.api-sports.io/teams?league=4&season=2024',
+  headers: {
+    'x-rapidapi-key': '9e59e0123e84ca78fb2f9cd18709b990',
+    'x-rapidapi-host': 'v3.football.api-sports.io'
+  }
+};
+
+axios(config)
+.then(function (response) {
+  console.log(JSON.stringify(response.data));
+})
+.catch(function (error) {
+  console.log(error);
+});

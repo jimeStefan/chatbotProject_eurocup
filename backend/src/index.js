@@ -2,7 +2,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const http = require('http');
 const socketIo = require('socket.io');
-const Fuse = require('fuse.js');
 const config = require('./config');
 const routes = require('./routes');
 const { getEuroCupTeams, getEuroCupPlayers } = require('./services/footballApiService');
@@ -31,12 +30,11 @@ io.on('connection', (socket) => {
 
     try {
       let response;
-      // Simple intent detection based on keywords
       if (message.toLowerCase().includes('teams')) {
         const teams = await getEuroCupTeams();
         response = teams.response.map(team => team.team.name).join(', ');
       } else if (message.toLowerCase().includes('players')) {
-        const teamId = await extractTeamId(message); // Logic to extract teamId from message
+        const teamId = await extractTeamId(message);
         if (teamId) {
           const players = await getEuroCupPlayers(teamId);
           response = players.response.map(player => player.player.name).join(', ');
@@ -69,10 +67,8 @@ server.listen(config.PORT, () => {
   console.log(`Server running on port ${config.PORT}`);
 });
 
-// Function to extract teamId from the message
 async function extractTeamId(message) {
   try {
-    // Fetch team names and IDs from the database
     const teams = await Match.distinct('team1');
     const teamIds = await Match.distinct('match_id');
     const teamMap = teams.reduce((map, team, index) => {
@@ -80,7 +76,6 @@ async function extractTeamId(message) {
       return map;
     }, {});
 
-    // Create a Fuse instance for fuzzy string matching
     const fuse = new Fuse(teams, { keys: ['name'] });
     const result = fuse.search(message);
 

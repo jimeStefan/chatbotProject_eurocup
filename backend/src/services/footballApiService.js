@@ -1,42 +1,31 @@
 const axios = require('axios');
 
-const API_KEY = '9e59e0123e84ca78fb2f9cd18709b990';
-const API_HOST = 'v3.football.api-sports.io';
-
-const instance = axios.create({
-  baseURL: `https://${API_HOST}`,
+const apiClient = axios.create({
+  baseURL: 'https://v3.football.api-sports.io/',
   headers: {
-    'x-rapidapi-host': API_HOST,
-    'x-rapidapi-key': API_KEY,
-    'x-apisports-key': API_KEY,
+    'x-rapidapi-key': '9e59e0123e84ca78fb2f9cd18709b990',
+    'x-rapidapi-host': 'v3.football.api-sports.io'
   }
 });
 
-async function getEuroCupTeams() {
+const getEuroCupTeams = async () => {
   try {
-    const response = await instance.get('/teams', {
-      params: { league: 4, season: 2024 }  // Use correct league ID for Euro Cup
-    });
+    const response = await apiClient.get('/teams', { params: { league: 4, season: 2024 } });
     return response.data;
-  } catch (err) {
-    console.error('Error fetching teams:', err);
-    throw err;
+  } catch (error) {
+    console.error('Error fetching teams:', error);
+    throw error;
   }
-}
-
-async function getEuroCupPlayers(teamId) {
-  try {
-    const response = await instance.get('/players', {
-      params: { team: teamId, season: 2024 }
-    });
-    return response.data;
-  } catch (err) {
-    console.error('Error fetching players:', err);
-    throw err;
-  }
-}
-
-module.exports = {
-  getEuroCupTeams,
-  getEuroCupPlayers
 };
+
+const getEuroCupPlayers = async (teamId) => {
+  try {
+    const response = await apiClient.get('/players', { params: { team: teamId, season: 2024 } });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching players:', error);
+    throw error;
+  }
+};
+
+module.exports = { getEuroCupTeams, getEuroCupPlayers };
