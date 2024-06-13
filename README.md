@@ -8,7 +8,7 @@ This project is a real-time chatbot application that provides information about 
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/chatbot_eurocup.git
+git clone [https://github.com/yourusername/chatbot_eurocup.git](https://github.com/jimech/chatbotProject_eurocup.git)
 cd chatbot-project-eurocup
 
 2. Install dependencies (Backend Dependencies):
@@ -36,6 +36,7 @@ You can add a script in your package.json to use nodemon for easier development:
 2. Ensure you have MongoDB installed and running on your machine.
 
 3. Run the backend server:cd backend
+npm install
 npm run dev
 
 4. cd frontend
