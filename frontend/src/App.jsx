@@ -3,7 +3,6 @@ import io from 'socket.io-client';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-
 const socket = io('http://localhost:5000');
 
 function App() {
@@ -12,8 +11,11 @@ function App() {
 
   useEffect(() => {
     socket.on('message', (message) => {
+      console.log('Received message from server:', message);
       setMessages((prevMessages) => [...prevMessages, { text: message, user: false }]);
     });
+
+    socket.emit('message', 'Hello, how can I help?');
 
     return () => {
       socket.off('message');
@@ -29,16 +31,13 @@ function App() {
   };
 
   return (
-
     <div className="container">
-
-      <h1 className="my-4">EUROCUP  2024</h1>
+      <h1 className="my-4">Eurocup Chatbot</h1>
       <div className="chatbox border rounded p-3 mb-4">
         {messages.map((msg, index) => (
           <div key={index} className={`message ${msg.user ? 'user' : ''}`}>
             {msg.text}
           </div>
-
         ))}
       </div>
       <div className="input-group mb-3">
