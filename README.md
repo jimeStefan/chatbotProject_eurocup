@@ -12,11 +12,15 @@ git clone [https://github.com/yourusername/chatbot_eurocup.git](https://github.c
 cd chatbot-project-eurocup
 
 2. Install dependencies (Backend Dependencies):
-   -cd backend
-   -npm install express mongoose socket.io axios bcrypt fuse.js
+cd backend
+npm init -y
+npm install express http socket.io axios mongoose cors
 
-Development dependencies (optional but recommended for development):
-  -npm install --save-dev nodemon
+Install dependencies (front end)
+cd frontend
+npm init -y
+npm install react react-dom socket.io-client vite @vitejs/plugin-react bootstrap
+
 
 You can add a script in your package.json to use nodemon for easier development:
 "scripts": {
