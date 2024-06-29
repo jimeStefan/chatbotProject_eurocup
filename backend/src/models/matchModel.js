@@ -9,10 +9,8 @@ const matchSchema = new mongoose.Schema({
   status: String,
   score: {
     team1: Number,
-    team2: Number
-  }
+    team2: Number,
+  },
 });
 
-const Match = mongoose.model('Match', matchSchema);
-
-module.exports = Match;
+module.exports = mongoose.models.Match || mongoose.model('Match', matchSchema);

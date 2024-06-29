@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
-import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import './App.css';
 
 const socket = io('http://localhost:5000');
 
@@ -11,7 +11,6 @@ function App() {
 
   useEffect(() => {
     socket.on('message', (message) => {
-      console.log('Received message from server:', message);
       setMessages((prevMessages) => [...prevMessages, { text: message, user: false }]);
     });
 
@@ -22,10 +21,11 @@ function App() {
     };
   }, []);
 
-  const sendMessage = () => {
-    if (input.trim()) {
-      socket.emit('message', input);
-      setMessages((prevMessages) => [...prevMessages, { text: input, user: true }]);
+  const sendMessage = (msg) => {
+    const message = msg || input;
+    if (message.trim()) {
+      socket.emit('message', message);
+      setMessages((prevMessages) => [...prevMessages, { text: message, user: true }]);
       setInput('');
     }
   };
@@ -49,7 +49,7 @@ function App() {
           onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
           placeholder="Type a message..."
         />
-        <button className="btn btn-primary" onClick={sendMessage}>Send</button>
+        <button className="btn btn-primary" onClick={() => sendMessage()}>Send</button>
       </div>
     </div>
   );
