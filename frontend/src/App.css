@@ -13,6 +13,18 @@ body {
   background-attachment: fixed;
 }
 
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.logo {
+  width: 190px;
+  height: auto;
+}
+
 .container {
   max-width: 600px;
   width: 100%;

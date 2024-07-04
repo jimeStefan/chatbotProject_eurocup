@@ -1,0 +1,14 @@
+@font-face {
+    font-family: 'YourCustomFont';
+    src: url('../fonts/your-custom-font.woff') format('woff');
+        
+    font-weight: normal;
+    font-style: normal;
+    /* Optionally, specify other font properties like font-display, font-stretch, etc. */
+  }
+  
+  body {
+    /* Optionally, apply the custom font to the entire body */
+    font-family: 'YourCustomFont', sans-serif;
+  }
+  

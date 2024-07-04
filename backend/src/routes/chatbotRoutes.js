@@ -1,17 +1,11 @@
 const express = require('express');
 const { handleMessage } = require('../controllers/chatbotController');
-
 const router = express.Router();
 
-router.post('/chat', async (req, res) => {
+router.post('/message', async (req, res) => {
   const { message, sessionId } = req.body;
-  try {
-    const response = await handleMessage(message, sessionId);
-    res.json({ response });
-  } catch (err) {
-    console.error('Error handling message:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  const response = await handleMessage(message, sessionId);
+  res.json({ response });
 });
 
 module.exports = router;

@@ -1,9 +1,31 @@
-const { getEuroCupTeams, getEuroCupPlayers, getEuroCupMatches, getLiveScores, getEuroCupStadiums, getEuroCupProgress, getHistoricalMatches, getMatchDetails } = require('../services/apiService');
+const fs = require('fs');
+const path = require('path');
+const { getEuroCupPlayers, getEuroCupMatches, getLiveScores, getMatchDetails } = require('../services/apiService');
 const Fuse = require('fuse.js');
+
+const teams = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/teams.json')));
+const stadiums = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/stadiums.json')));
 
 const userSessions = {};
 
-const handleMessage = async (message, sessionId) => {
+// Function to clean text (lowercase, remove punctuation, trim)
+function cleanText(text) {
+  text = text.toLowerCase();
+  text = text.replace(/[^\w\s]/g, '');
+  text = text.replace(/\s+/g, ' ').trim();
+  return text;
+}
+
+// Model to represent Eurocup progress
+let eurocupProgress = {
+  currentStage: 'Group Stage', // Initial stage
+  teams: Object.keys(teams), // Initial list of teams
+};
+
+const initialEurocupProgress = { ...eurocupProgress }; // Keep a copy of initial progress
+
+async function handleMessage(message, sessionId) {
+   // Initialize user session if it doesn't exist
   if (!userSessions[sessionId]) {
     userSessions[sessionId] = { history: [], fallbackCount: 0, state: 'initial' };
   }
@@ -12,6 +34,7 @@ const handleMessage = async (message, sessionId) => {
   userSession.history.push({ text: message, sender: 'user' });
 
   let response;
+  const cleanedMessage = cleanText(message);
 
   switch (userSession.state) {
     case 'initial':
@@ -20,155 +43,213 @@ const handleMessage = async (message, sessionId) => {
       break;
 
     case 'waitingForChoice':
-      if (message.toLowerCase().includes('teams')) {
-        const teams = await getEuroCupTeams();
-        response = `The teams are:\n${teams.response.map(team => `- ${team.team.name}`).join('\n')}\nWould you like to know more about a specific team?`;
-        userSession.state = 'waitingForTeam';
-      } else if (message.toLowerCase().includes('players')) {
+      if (cleanedMessage.includes('teams')) { response = `The initial 24 teams are:\n${eurocupProgress.teams.map((team, index) => `${index + 1}. ${team}`).join('\n')}\nPlease select a team by number.`;
+      userSession.state = 'waitingForTeamSelection';
+        
+      } else if (cleanedMessage.includes('players')) {
         response = "Please specify the team name or country to get the list of players.";
         userSession.state = 'waitingForTeamName';
-      } else if (message.toLowerCase().includes('matches')) {
-        const matches = await getEuroCupMatches();
-        const pastMatches = matches.response.filter(match => new Date(match.fixture.date) < new Date());
-        const upcomingMatches = matches.response.filter(match => new Date(match.fixture.date) >= new Date());
-        response = `Upcoming matches:\n${upcomingMatches.map((match, index) => `${index + 1}. ${match.teams.home.name} vs ${match.teams.away.name} on ${match.fixture.date}`).join('\n')}\n\nPast matches:\n${pastMatches.map((match, index) => `${index + 1}. ${match.teams.home.name} vs ${match.teams.away.name} on ${match.fixture.date}`).join('\n')}\nType the number of the match to get more details or 'back' to return to the main menu.`;
-        userSession.matches = { past: pastMatches, upcoming: upcomingMatches };
-        userSession.state = 'waitingForMatchSelection';
-      } else if (message.toLowerCase().includes('live scores')) {
-        const liveScores = await getLiveScores();
-        response = liveScores.response.length === 0 ? "There are no live matches right now." : `Live scores:\n${liveScores.response.map(match => `- ${match.teams.home.name} ${match.goals.home} : ${match.goals.away} ${match.teams.away.name} (Status: ${match.fixture.status.long})`).join('\n')}`;
+      } else if (cleanedMessage.includes('matches')) {
+         // Fetch and display Eurocup matches
+        try {
+          const matches = await getEuroCupMatches();
+          const now = new Date();
+          const pastMatches = matches.response.filter(match => new Date(match.fixture.date) < now);
+          const upcomingMatches = matches.response.filter(match => new Date(match.fixture.date) >= now);
+
+          let response = '';
+          if (upcomingMatches.length > 0) {
+            response += `Upcoming matches:\n${upcomingMatches.map((match, index) => `${index + 1}. ${match.teams.home.name} vs ${match.teams.away.name} on ${match.fixture.date}`).join('\n')}\n\n`;
+          } else {
+            response += "There are no upcoming matches.\n\n";
+          }
+          if (pastMatches.length > 0) {
+            response += `Past matches:\n${pastMatches.map((match, index) => `${index + 1}. ${match.teams.home.name} vs ${match.teams.away.name} on ${match.fixture.date}`).join('\n')}\n`;
+          } else {
+            response += "There are no past matches.\n";
+          }
+
+          response += "Please select a match by number.";
+          userSession.state = 'waitingForMatchSelection';  // Update session state
+          return response;
+        } catch (error) {
+          console.error("Error fetching matches:", error);
+          response = "There was an error fetching matches. Please try again later.";
+          userSession.state = 'initial';
+          return response;
+        }
+      } else if (cleanedMessage.includes('live scores')) {
+        try {
+          const liveScores = await getLiveScores(); // Call API to fetch live scores
+          if (liveScores.response.length === 0) {
+            response = "There are no live matches right now.";
+          } else {
+            response = `Live scores:\n${liveScores.response.map(match => `- ${match.teams.home.name} ${match.goals.home} : ${match.goals.away} ${match.teams.away.name} (Status: ${match.fixture.status.long})`).join('\n')}`;
+          }
+          userSession.state = 'initial';
+        } catch (error) {
+          console.error("Error fetching live scores:", error);
+          response = "There was an error fetching live scores. Please try again later.";
+          userSession.state = 'initial';
+        }
+      } else if (cleanedMessage.includes('stadiums')) {
+         // List stadiums and prompt user to select one
+        response = `The stadiums are:\n${Object.keys(stadiums).map((stadium, index) => `${index + 1}. ${stadium}`).join('\n')}\nPlease select a stadium by number.`;
+        userSession.state = 'waitingForStadiumSelection';
+      } else if (cleanedMessage.includes('eurocup progress')) {
+        response = `Eurocup progress:\nCurrent Stage: ${eurocupProgress.currentStage}\nTeams: ${eurocupProgress.teams.join(', ')}\n\n`;
         userSession.state = 'initial';
-      } else if (message.toLowerCase().includes('stadiums')) {
-        const stadiums = await getEuroCupStadiums();
-        response = `The stadiums are:\n${stadiums.response.map(stadium => `- ${stadium.name} in ${stadium.city}`).join('\n')}\nWould you like to know more about a specific stadium?`;
-        userSession.state = 'waitingForStadium';
-      } else if (message.toLowerCase().includes('eurocup progress')) {
-        const progress = await getEuroCupProgress();
-        response = `Current standings:\n${progress.response[0].league.standings[0].map(team => `- ${team.rank}. ${team.team.name} (${team.points} points)`).join('\n')}`;
-        userSession.state = 'initial';
-      } else if (message.toLowerCase().includes('historical matches')) {
+      } else if (cleanedMessage.includes('historical matches')) {
         response = "Please specify the team name or country to get historical matches.";
         userSession.state = 'waitingForHistoricalTeam';
-      } else if (message.toLowerCase().includes('restart')) {
+      } else if (cleanedMessage.includes('restart')) {
         response = "Restarting the conversation. What would you like to know about? Type 'teams', 'players', 'matches', 'live scores', 'stadiums', 'Eurocup progress', or 'historical matches'.";
         userSessions[sessionId] = { history: [], fallbackCount: 0, state: 'initial' };
       } else {
+         // Handle unrecognized input
         response = "Please type 'teams', 'players', 'matches', 'live scores', 'stadiums', 'Eurocup progress', or 'historical matches'. You can also type 'restart' to start over.";
       }
       break;
 
     case 'waitingForMatchSelection':
-      if (message.toLowerCase().includes('back')) {
-        response = "Returning to the main menu. What would you like to know about? Type 'teams', 'players', 'matches', 'live scores', 'stadiums', 'Eurocup progress', or 'historical matches'.";
-        userSession.state = 'initial';
-      } else {
-        const matchIndex = parseInt(message) - 1;
-        if (isNaN(matchIndex) || matchIndex < 0 || matchIndex >= userSession.matches.past.length + userSession.matches.upcoming.length) {
-          response = "Please specify a valid match number or type 'back' to return to the main menu.";
+      //user's selection of a match
+      const matchIndex = parseInt(cleanedMessage) - 1;
+      try {
+        const matches = await getEuroCupMatches();
+        const pastMatches = matches.response.filter(match => new Date(match.fixture.date) < new Date());
+        const upcomingMatches = matches.response.filter(match => new Date(match.fixture.date) >= new Date());
+        const allMatches = [...upcomingMatches, ...pastMatches]; // Combine matches
+        const selectedMatch = allMatches[matchIndex];
+
+        if (selectedMatch) {
+          try {
+            const matchDetails = await getMatchDetails(selectedMatch.fixture.id);
+            response = `Match details:\n${matchDetails.response.map(match => `- ${match.teams.home.name} vs ${match.teams.away.name} on ${match.fixture.date}\n  Goals: ${match.goals.home} - ${match.goals.away}\n  Stadium: ${match.fixture.venue.name}\n  Players:\n    ${match.lineups[0].startXI.map(player => `- ${player.player.name}`).join('\n')}\n    ${match.lineups[1].startXI.map(player => `- ${player.player.name}`).join('\n')}`).join('\n')}`;
+            userSession.state = 'initial';
+          } catch (error) {
+            console.error("Error fetching match details:", error);
+            response = "There was an error fetching match details. Please try again later.";
+          }
         } else {
-          const selectedMatch = matchIndex < userSession.matches.upcoming.length
-            ? userSession.matches.upcoming[matchIndex]
-            : userSession.matches.past[matchIndex - userSession.matches.upcoming.length];
-          const matchDetails = await getMatchDetails(selectedMatch.fixture.id);
-          const match = matchDetails.response[0];
-          response = `Match details:\n- ${match.teams.home.name} vs ${match.teams.away.name} on ${match.fixture.date}\n  Goals: ${match.goals.home} - ${match.goals.away}\n  Stadium: ${match.fixture.venue.name}\n  Players:\n    ${match.lineups[0].startXI.map(player => `- ${player.player.name}`).join('\n')}\n    ${match.lineups[1].startXI.map(player => `- ${player.player.name}`).join('\n')}\nWould you like to know more about another match or type 'back' to return to the main menu?`;
-          userSession.state = 'waitingForMatchDetails';
+          response = "Please select a valid match number.";
         }
+      } catch (error) {
+        console.error("Error fetching matches:", error);
+        response = "There was an error fetching match data. Please try again later.";
       }
       break;
 
-    case 'waitingForMatchDetails':
-      if (message.toLowerCase().includes('back')) {
-        response = "Returning to the main menu. What would you like to know about? Type 'teams', 'players', 'matches', 'live scores', 'stadiums', 'Eurocup progress', or 'historical matches'.";
+    case 'waitingForTeamSelection':
+      const teamIndex = parseInt(cleanedMessage) - 1;
+      const selectedTeam = eurocupProgress.teams[teamIndex];
+      if (selectedTeam) {
+        const players = await getEuroCupPlayers(teams[selectedTeam]);
+        response = `The players for ${selectedTeam} are:\n${players.response.map(player => `- ${player.player.name}`).join('\n')}\nWould you like to select another team? Press 'yes' or 'no'.`;
+        userSession.state = 'waitingForTeamSelectionFollowUp';
+      } else {
+        response = "Please select a valid team number.";
+      }
+      break;
+
+    case 'waitingForTeamSelectionFollowUp':
+      if (cleanedMessage.toLowerCase() === 'yes') {
+        response = "Sure! Please select another team by number.";
+        userSession.state = 'waitingForTeamSelection';
+      } else if (cleanedMessage.toLowerCase() === 'no') {
+        response = "What would you like to know about? Type 'teams', 'players', 'matches', 'live scores', 'stadiums', 'Eurocup progress', or 'historical matches'. You can also type 'restart' to start over.";
         userSession.state = 'initial';
       } else {
-        response = "Please specify a valid match or type 'back' to return to the main menu.";
-      }
-      break;
+        response = "I didn't understand that. Please respond with 'yes' or 'no'.";
+        }
+        break;
+      
+        case 'waitingForStadiumSelection':
+          const stadiumIndex = parseInt(cleanedMessage) - 1;
+          const stadiumKeys = Object.keys(stadiums);
+          if (stadiumIndex >= 0 && stadiumIndex < stadiumKeys.length) {
+            const selectedStadium = stadiumKeys[stadiumIndex];
+            const stadiumInfo = stadiums[selectedStadium];  // Get stadium info from stadiums file
 
-    case 'waitingForTeam':
-      response = "Please specify a valid team name or type 'players' to get the list of players for a team.";
-      userSession.state = 'waitingForTeamName';
-      break;
-
-    case 'waitingForTeamName':
-      const teamId = await extractTeamId(message);
-      if (teamId) {
-        const players = await getEuroCupPlayers(teamId);
-        response = `The players are:\n${players.response.map(player => `- ${player.player.name}`).join('\n')}\nAnything else you need?`;
-        userSession.state = 'initial';
-      } else {
-        response = "Please specify a valid team name or country.";
-      }
-      break;
-
-    case 'waitingForHistoricalTeam':
-      const historicalTeamId = await extractTeamId(message);
-      if (historicalTeamId) {
-        const historicalMatches = await getHistoricalMatches(historicalTeamId);
-        response = `Historical matches:\n${historicalMatches.response.map(match => `- ${match.teams.home.name} vs ${match.teams.away.name} on ${match.fixture.date} (Score: ${match.goals.home} - ${match.goals.away})`).join('\n')}`;
-        userSession.state = 'initial';
-      } else {
-        response = "Please specify a valid team name or country.";
-      }
-      break;
-
-    default:
-      response = "I'm sorry, I didn't understand that. Can you please rephrase?";
-      break;
-  }
-
-  userSession.history.push({ text: response, sender: 'bot' });
-  return response;
-};
-
-async function extractTeamId(message) {
-  try {
-    const teams = await getEuroCupTeams();
-    const teamMap = teams.response.reduce((map, team) => {
-      map[team.team.name.toLowerCase()] = team.team.id;
-      map[team.team.country.toLowerCase()] = team.team.id;
-      return map;
-    }, {});
-
-    const fuse = new Fuse(Object.keys(teamMap), { includeScore: true });
-    const result = fuse.search(message.toLowerCase());
-
-    if (result.length > 0 && result[0].score < 0.4) { // Adjust the threshold as necessary
-      const teamName = result[0].item;
-      return teamMap[teamName];
+            if (stadiumInfo) {
+                // Construct response with stadium information
+              const location = stadiumInfo.location ? `- Location: ${stadiumInfo.location}\n` : '';
+              const capacity = stadiumInfo.capacity ? `- Capacity: ${stadiumInfo.capacity}\n` : '';
+              const homeTeam = stadiumInfo.homeTeam ? `- Home Team: ${stadiumInfo.home_Team}\n` : '';
+        
+              response = `Information about ${selectedStadium}:\n${location}${capacity}${homeTeam}\nWould you like to know about another stadium? (yes or no)`;
+              userSession.state = 'waitingForAnotherStadium';
+            } else {
+              response = "Stadium information is not available."; // Handle case where stadium information is missing
+              userSession.state = 'waitingForChoice';// Update session state to wait for user confirmation
+            }
+          } else {
+            response = "Please select a valid stadium number."; // Handle invalid stadium selection
+          }
+          break;
+        
+        case 'waitingForAnotherStadium':
+          // Handle user response after providing stadium information
+          if (cleanedMessage === 'yes') {
+            response = `The stadiums are:\n${Object.keys(stadiums).map((stadium, index) => `${index + 1}. ${stadium}`).join('\n')}\nPlease select a stadium by number.`;
+            userSession.state = 'waitingForStadiumSelection';
+          } else if (cleanedMessage === 'no') {
+              // User does not want to know about another stadium
+            response = "What would you like to know about? Type 'teams', 'players', 'matches', 'live scores', 'stadiums', 'Eurocup progress', or 'historical matches'. You can also type 'restart' to start over.";
+            userSession.state = 'initial';
+             // Handle unrecognized response
+          } else {
+            response = "I didn't understand that. Please respond with 'yes' or 'no'.";
+            userSession.state = 'waitingForAnotherStadium';
+          }
+          break;
+        
+  
+      case 'waitingForTeamName':
+        const teamFound = Object.keys(teams).find(team => cleanedMessage.includes(cleanText(team)));
+        if (teamFound) {
+          const players = await getEuroCupPlayers(teams[teamFound]);
+          response = `The players for ${teamFound} are:\n${players.response.map(player => `- ${player.player.name}`).join('\n')}\nWould you like to know more about this team or another team?`;
+          userSession.state = 'waitingForTeamSelectionFollowUp';
+        } else {
+          response = "Team not found. Please specify a valid team name or country.";
+        }
+        break;
+  
+      case 'waitingForHistoricalTeam':
+         // Handle user request for historical matches based on team name or country
+        const historicalTeamFound = Object.keys(teams).find(team => cleanedMessage.includes(cleanText(team)));
+        if (historicalTeamFound) {
+          try {
+            const matches = await getEuroCupMatches();
+            const teamMatches = matches.response.filter(match => match.teams.home.name === historicalTeamFound || match.teams.away.name === historicalTeamFound);
+            if (teamMatches.length > 0) {
+              response = `Historical matches for ${historicalTeamFound}:\n${teamMatches.map((match, index) => `${index + 1}. ${match.teams.home.name} vs ${match.teams.away.name} on ${match.fixture.date}`).join('\n')}\nPlease select a match by number.`;
+              userSession.state = 'waitingForMatchSelection';
+            } else {
+              response = `No historical matches found for ${historicalTeamFound}.`;
+              userSession.state = 'initial';
+            }
+          } catch (error) {
+            console.error("Error fetching historical matches:", error);
+            response = "There was an error fetching historical matches. Please try again later.";
+            userSession.state = 'initial';
+          }
+        } else {
+          response = "Team not found. Please specify a valid team name or country.";
+        }
+        break;
+  
+      default:
+        // Handle default case for unrecognized input
+        response = "I'm sorry, I didn't understand that.";
+        break;
     }
-  } catch (err) {
-    console.error('Error extracting teamId:', err);
+  
+    userSession.history.push({ text: response, sender: 'bot' });
+    return response;
   }
-
-  return null;
-}
-
-async function extractMatchId(message, isPastMatch) {
-  try {
-    const matches = await getEuroCupMatches();
-    const matchMap = matches.response.reduce((map, match) => {
-      map[`${match.teams.home.name.toLowerCase()} vs ${match.teams.away.name.toLowerCase()} on ${match.fixture.date}`] = match.fixture.id;
-      return map;
-    }, {});
-
-    const fuse = new Fuse(Object.keys(matchMap), { includeScore: true });
-    const result = fuse.search(message.toLowerCase());
-
-    if (result.length > 0 && result[0].score < 0.4) { // Adjust the threshold as necessary
-      const matchName = result[0].item;
-      return matchMap[matchName];
-    }
-  } catch (err) {
-    console.error('Error extracting matchId:', err);
-  }
-
-  return null;
-}
-
-module.exports = {
-  handleMessage
-};
-
-     
+  
+  module.exports = {
+    handleMessage,
+  };
+  

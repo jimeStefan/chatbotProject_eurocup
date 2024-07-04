@@ -53,21 +53,13 @@ async function getLiveScores() {
     const response = await instance.get('/fixtures', {
       params: { live: 'all' },
     });
-    return response.data;
+
+    //  only Eurocup matches
+    const eurocupMatches = response.data.response.filter(match => match.league.id === 4);
+
+    return { response: eurocupMatches };
   } catch (err) {
     console.error('Error fetching live scores:', err);
-    throw err;
-  }
-}
-
-async function getEuroCupStadiums() {
-  try {
-    const response = await instance.get('/venues', {
-      params: { league: 4, season: 2024 },
-    });
-    return response.data;
-  } catch (err) {
-    console.error('Error fetching stadiums:', err);
     throw err;
   }
 }
@@ -77,6 +69,7 @@ async function getEuroCupProgress() {
     const response = await instance.get('/standings', {
       params: { league: 4, season: 2024 },
     });
+
     return response.data;
   } catch (err) {
     console.error('Error fetching Eurocup progress:', err);
@@ -111,7 +104,6 @@ module.exports = {
   getEuroCupPlayers,
   getEuroCupMatches,
   getLiveScores,
-  getEuroCupStadiums,
   getEuroCupProgress,
   getHistoricalMatches,
   getMatchDetails,

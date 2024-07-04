@@ -1,15 +1,11 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
+const mongoose = require('mongoose');
 const config = require('./config');
-const { handleMessage } = require('./controllers/chatbotController');
-
-const conversationRoutes = require('./routes/conversationRoutes');
-const matchRoutes = require('./routes/matchRoutes');
-const userRoutes = require('./routes/userRoutes');
 const chatbotRoutes = require('./routes/chatbotRoutes');
+const { handleMessage } = require('./controllers/chatbotController'); // Ensure handleMessage is imported correctly
 
 const app = express();
 const server = http.createServer(app);
@@ -22,13 +18,7 @@ const io = socketIo(server, {
 
 app.use(express.json());
 app.use(cors());
-
-app.use('/api/conversations', conversationRoutes);
-app.use('/api/matches', matchRoutes);
-app.use('/api/users', userRoutes);
 app.use('/api/chatbot', chatbotRoutes);
-
-const userSessions = {};
 
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
@@ -37,13 +27,12 @@ io.on('connection', (socket) => {
 
   socket.on('message', async (message) => {
     console.log('Received message:', message);
-    const response = await handleMessage(message, socket.id);
+    const response = await handleMessage(message, socket.id); // Use handleMessage function to process message
     socket.emit('message', response);
   });
 
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
-    delete userSessions[socket.id];
   });
 });
 

@@ -1,0 +1,53 @@
+{
+    "Olympiastadion Berlin": {
+      "capacity": "71000",
+      "city": "Berlin",
+      "home_team": "Hertha Berlin"
+    },
+    "Cologne": {
+      "capacity": "43000",
+      "city": "Cologne",
+      "home_team": "FC Köln"
+    },
+    "BVB Stadion Dortmund": {
+      "capacity": "62000",
+      "city": "Dortmund",
+      "home_team": "Borussia Dortmund"
+    },
+    "Düsseldorf Arena": {
+      "capacity": "47000",
+      "city": "Düsseldorf",
+      "home_team": "Fortuna Düsseldorf"
+    },
+    "Frankfurt Arena": {
+      "capacity": "47000",
+      "city": "Frankfurt",
+      "home_team": "Eintracht Frankfurt"
+    },
+    "Arena AufSchalke": {
+      "capacity": "50000",
+      "city": "Gelsenkirchen",
+      "home_team": "Schalke"
+    },
+    "Volksparkstadion Hamburg": {
+      "capacity": "49000",
+      "city": "Hamburg",
+      "home_team": "Hamburger SV"
+    },
+    "Leipzig Stadium": {
+      "capacity": "40000",
+      "city": "Leipzig",
+      "home_team": "RB Leipzig"
+    },
+    "Munich Football Arena": {
+      "capacity": "66000",
+      "city": "Munich",
+      "home_team": "Bayern München"
+    },
+    "Stuttgart Arena": {
+      "capacity": "51000",
+      "city": "Stuttgart",
+      "home_team": "VfB Stuttgart"
+    }
+  }
+  
