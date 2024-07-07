@@ -1,3 +1,5 @@
 {
-    "liveServer.settings.port": 5502
+    "liveServer.settings.port": 5502,
+    "appService.defaultWebAppToDeploy": "undefined/subscriptions/58c3be35-997f-4a1a-970d-eea717bde762/resourceGroups/stefan.ambrosie_rg_3100/providers/Microsoft.Web/sites/euro-chatbot",
+    "appService.deploySubpath": "."
 }

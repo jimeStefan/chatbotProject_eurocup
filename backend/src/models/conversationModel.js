@@ -1,7 +1,6 @@
-const mongoose = require('mongoose');
-
-const conversationSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+// Define the conversation schema as a plain JavaScript object (POJO)
+const conversationSchema = {
+  user: { type: String, required: true },  // Assuming user is referenced by some unique identifier
   messages: [
     {
       text: { type: String, required: true },
@@ -11,6 +10,6 @@ const conversationSchema = new mongoose.Schema({
   ],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-});
+};
 
-module.exports = mongoose.models.Conversation || mongoose.model('Conversation', conversationSchema);
+module.exports = conversationSchema;

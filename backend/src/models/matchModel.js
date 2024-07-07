@@ -1,6 +1,5 @@
-const mongoose = require('mongoose');
 
-const matchSchema = new mongoose.Schema({
+const matchSchema = {
   match_id: String,
   date: Date,
   team1: String,
@@ -11,6 +10,6 @@ const matchSchema = new mongoose.Schema({
     team1: Number,
     team2: Number,
   },
-});
+};
 
-module.exports = mongoose.models.Match || mongoose.model('Match', matchSchema);
+module.exports = matchSchema;
