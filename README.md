@@ -14,7 +14,7 @@ cd chatbot-project-eurocup
 2. Install dependencies (Backend Dependencies):
 cd backend
 npm init -y
-npm install express http socket.io axios mongoose cors
+npm install express http socket.io axios mongoose cors date-fns
 
 Install dependencies (front end)
 cd frontend
