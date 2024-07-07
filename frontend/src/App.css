@@ -7,11 +7,14 @@ body {
   background: radial-gradient(circle at 74.2% 50.9%, rgb(14, 72, 222) 5.2%, rgb(3, 22, 65) 75.3%);
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background-attachment: fixed;
 }
+
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: context-box;
+}
+
 
 .logo-container {
   display: flex;
@@ -26,19 +29,32 @@ body {
 }
 
 .container {
-  max-width: 600px;
-  width: 100%;
-  padding: 20px;
-  background-color: rgba(255, 255, 255, 0.1); /* Semi-transparent white */
+  width: 1140px;
+  margin: auto;
+  padding: 10px;
+  background-color: rgba(228, 221, 221, 0.1); /* Semi-transparent white */
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   color: white;
+  --font-name: "Montserrat", sans-serif;
 }
+
+.containerfooter {
+  
+    width: 1140px;
+    margin: auto;
+    padding: 0px 20px;
+  }
+
+  section {
+    padding: 60px 0px;
+  }
+  
 
 .chatbox {
   height: 60vh;
   overflow-y: auto;
-  background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
+  background-color: rgba(255, 255, 255, 0.866); /* Semi-transparent white */
   border-radius: 10px;
   padding: 10px;
 }
@@ -93,18 +109,13 @@ body {
   min-height: 100vh;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
 button {
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
-  font-family: inherit;
+  --font-name: "Montserrat", sans-serif;
   background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;

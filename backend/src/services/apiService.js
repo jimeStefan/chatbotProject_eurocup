@@ -1,4 +1,5 @@
 const axios = require('axios');
+const {format} = require("date-fns");
 
 const API_KEY = '9e59e0123e84ca78fb2f9cd18709b990'; // Replace with your API key
 const API_HOST = 'v3.football.api-sports.io';
@@ -47,6 +48,23 @@ async function getEuroCupMatches() {
     throw err;
   }
 }
+
+/*async function getMatchDetailsByTeams(team1, team2){
+  try{
+    const fixtures = await instance.get('/fixtures', {
+      params: { league: 4, season: 2024 },
+    });
+    games  = fixtures.data.response;
+    for(game in games){
+      if((games[game].teams.away.name == team1 && games[game].teams.home.name == team2) || (games[game].teams.away.name == team2 && games[game].teams.home.name == team1)){
+        return getMatchDetails(games[game].fixture.id);
+      }
+    }
+  }catch (err){
+    console.error(`Error fetching match between ${team1} and ${team2}`, err);
+    throw err;
+  }
+}*/
 
 async function getLiveScores() {
   try {
